@@ -51,6 +51,10 @@ Runs are saved atomically in ignored `results/<uuid>.json`. Each contains raw sa
 
 ## Tests and production build
 
+[![CI](https://github.com/kaiserg/data-performance-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/kaiserg/data-performance-lab/actions/workflows/ci.yml)
+
+GitHub Actions runs backend tests (Python 3.13, all four engines including DataFusion) and the Next.js production build (Node 24, pnpm 12.6.0) in parallel on every push and pull request. Dependencies use the committed lockfiles. Tests generate tiny synthetic Parquet fixtures in temporary directories; CI never runs the dataset downloader, preparation scripts or benchmark matrix and verifies that no `data/` or `results/` directory is created.
+
 ```sh
 cd backend
 uv run pytest -q
