@@ -2,6 +2,31 @@
 
 A local, reproducible analytics lab comparing **Pandas, Polars, DuckDB and optional Rust/Apache DataFusion** on NYC Yellow Taxi data. Next.js charts, FastAPI, validated results, an explorer and saved benchmark history. No Docker required.
 
+## What we learned: 10 million rows
+
+Loading data and querying it are different costs. For **counting trips over five miles**, the same four engines returned **1,650,610 trips**, but the timing mode changed the comparison:
+
+![NYC Taxi benchmark infographic in Spanish comparing end-to-end and in-memory timings for Pandas, Polars, DuckDB and DataFusion on 10 million rows. Numerical results and timing definitions follow below.](docs/images/benchmarks-10m-v0.2.0.png)
+
+| Engine | End-to-end (ms) | In-memory (ms) |
+| --- | ---: | ---: |
+| Pandas | 610.25 | 4.92 |
+| Polars | 164.64 | 1.34 |
+| DuckDB | 77.82 | 6.42 |
+| Apache DataFusion | 578.16 | 2.91 |
+
+**End-to-end** includes engine import, setup, reading and query execution; it excludes Python process launch. **In-memory** excludes engine import and eager loading, while still including query planning and result materialization. The infographic uses a separate time scale for each panel.
+
+DataFusion's end-to-end time was close to Pandas, but its in-memory query took about **41% less time**. DuckDB had the lowest end-to-end time, while Polars had the lowest in-memory time in this workload. For a one-off query, the full cost matters; for repeated queries over loaded data, setup can be amortized. These observations describe this experiment, not a universal engine ranking.
+
+*Local medians of three measured repetitions per engine and mode, with one discarded warmup and a thread setting of four. macOS arm64, Python 3.13.15; Pandas 3.1.1, Polars 2.1.0, DuckDB 2.0.0 and DataFusion 54.1.0. Both modes used the same 10M-row Parquet file (SHA-256: `2d7f3a56a3437ade3e40b4d1292316537d8ac3b5e20245850be79ce4d02207aa`). The OS file cache was not cleared, and each engine uses its own in-memory representation. Results depend on hardware, versions, data and workload. See the [methodology](docs/methodology.md). The image uses Spanish labels; this table provides the values in English.*
+
+To reproduce both modes with all four engines, after installing the optional Rust extra and preparing the data, run from `backend/`:
+
+```sh
+uv run python -m app.benchmark --sizes 10m --operations distance --modes end-to-end in-memory --engines pandas polars duckdb datafusion --repeats 3 --warmups 1 --threads 4
+```
+
 ## Requirements and installation
 
 macOS (Intel/Apple Silicon), Linux, or Windows PowerShell: Python 3.13+, uv, Node.js 22+ and pnpm. Install these from their official distributions; on Windows use native PowerShell or WSL consistently. Allow several GB of disk and RAM; a 10M Pandas run can consume substantial memory.
